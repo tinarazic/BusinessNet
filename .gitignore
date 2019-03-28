@@ -102,3 +102,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# dodamo zaradi gesel
+auth.py
+auth.R
+Thumbs.db
