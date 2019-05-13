@@ -1,0 +1,53 @@
+CREATE TABLE zaposleni (
+ emso TEXT PRIMARY KEY,
+ ime TEXT,
+ priimek TEXT,
+ datum_rojstva DATE,
+ delovna_doba INTEGER,
+ kraj TEXT,
+ stopnja_izobrazbe INTEGER,
+ v_oddelku TEXT REFERENCES oddelki (oddelek)
+  	ON DELETE CASCADE 
+	ON UPDATE CASCADE,
+ na_projektu TEXT REFERENCES projekt (ime)
+	ON DELETE CASCADE 
+	ON UPDATE CASCADE
+);
+
+CREATE TABLE oddelki (
+ id INTEGER PRIMARY KEY,
+ oddelek TEXT
+);
+
+CREATE TABLE projekt (
+ id INTEGER PRIMARY KEY,
+ ime TEXT,
+ status TEXT,
+ datum_zacetka DATE,
+ datum_konca DATE,
+ budget FLOAT
+);
+
+CREATE TABLE sporocila (
+ id INTEGER,
+ cas DATETIME,
+ sporocilo TEXT, 
+ posiljatelj TEXT REFERENCES zaposleni (emso),
+ prejemnik TEXT REFERENCES zaposleni (emso),
+ PRIMARY KEY (posiljatelj, prejemnik, id)
+);
+
+CREATE TABLE komentarji (
+ id INTEGER PRIMARY KEY,
+ cas DATETIME,
+ komentar TEXT,
+ projekt INTEGER id,
+ avtor TEXT REFERENCES zaposleni (emso)
+);
+
+CREATE TABLE uporabnik (
+  uporabnisko_ime TEXT PRIMARY KEY,
+  geslo TEXT NOT NULL,
+  ime TEXT NOT NULL
+);
+
