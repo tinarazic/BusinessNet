@@ -1,48 +1,31 @@
-CREATE TABLE zaposleni (
- emso TEXT PRIMARY KEY,
- ime TEXT,
- priimek TEXT,
- datum_rojstva DATE,
- delovna_doba INTEGER,
- kraj TEXT,
- stopnja_izobrazbe INTEGER,
- v_oddelku TEXT REFERENCES oddelki (oddelek)
-  	ON DELETE CASCADE 
-	ON UPDATE CASCADE,
- na_projektu TEXT REFERENCES projekt (ime)
-	ON DELETE CASCADE 
-	ON UPDATE CASCADE
-);
-
 CREATE TABLE oddelki (
  id INTEGER PRIMARY KEY,
- oddelek TEXT
+ oddelek TEXT NOT NULL
 );
 
 CREATE TABLE projekt (
  id INTEGER PRIMARY KEY,
- ime TEXT,
- status TEXT,
- datum_zacetka DATE,
- datum_konca DATE,
+ ime TEXT NOT NULL,
+ status TEXT NOT NULL,
+ datum_zacetka DATE NOT NULL,
+ datum_konca DATE NOT NULL,
  budget FLOAT
 );
 
-CREATE TABLE sporocila (
- id INTEGER,
- cas DATETIME,
- sporocilo TEXT, 
- posiljatelj TEXT REFERENCES zaposleni (emso),
- prejemnik TEXT REFERENCES zaposleni (emso),
- PRIMARY KEY (posiljatelj, prejemnik, id)
-);
-
-CREATE TABLE komentarji (
- id INTEGER PRIMARY KEY,
- cas DATETIME,
- komentar TEXT,
- projekt INTEGER id,
- avtor TEXT REFERENCES zaposleni (emso)
+CREATE TABLE zaposleni (
+ emso TEXT PRIMARY KEY,
+ ime TEXT NOT NULL,
+ priimek TEXT NOT NULL,
+ datum_rojstva DATE NOT NULL,
+ delovna_doba INTEGER NOT NULL,
+ kraj TEXT NOT NULL,
+ stopnja_izobrazbe INTEGER NOT NULL,
+ v_oddelku INTEGER NOT NULL REFERENCES oddelki (id)
+  	ON DELETE CASCADE 
+	ON UPDATE CASCADE,
+ na_projektu INTEGER REFERENCES projekt (id)
+	ON DELETE CASCADE 
+	ON UPDATE CASCADE
 );
 
 CREATE TABLE uporabnik (
@@ -51,3 +34,25 @@ CREATE TABLE uporabnik (
   ime TEXT NOT NULL
 );
 
+CREATE TABLE sporocila (
+ id INTEGER,
+ cas TIMESTAMP DEFAULT now(),
+ sporocilo TEXT, 
+ posiljatelj TEXT NOT NULL REFERENCES uporabnik (uporabnisko_ime),
+ prejemnik TEXT NOT NULL REFERENCES uporabnik (uporabnisko_ime),
+ PRIMARY KEY (posiljatelj, prejemnik, id)
+);
+
+CREATE TABLE komentarji (
+ id INTEGER PRIMARY KEY,
+ cas TIMESTAMP DEFAULT now(),
+ komentar TEXT,
+ projekt INTEGER NOT NULL REFERENCES projekt (id),
+ avtor TEXT REFERENCES uporabnik (uporabnisko_ime)
+);
+
+INSERT INTO oddelki (id, oddelek) VALUES (1, 'IT');
+INSERT INTO projekt (id, ime, status, datum_zacetka, datum_konca, budget)
+ VALUES (1, 'namestitev_sistema_X', 'aktiven', '2019-01-01', '2020-01-01', 1000);
+
+INSERT INTO zaposleni (emso, ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe, v_oddelku, na_projektu) VALUES ('2109994505143', 'Ana', 'Kranjec', '1994-09-21', 4, 'Ljubljana', 4, 1, 3);
