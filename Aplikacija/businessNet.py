@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import sqlite3
-import bottle
+from bottle import *
 import hashlib # računanje kriptografski hash za gesla
 from datetime import datetime
-import auth_public as auth
+import auth_public as auth 
 import psycopg2, psycopg2.extensions, psycopg2.extras
 
 ######################################################################
@@ -12,7 +12,7 @@ import psycopg2, psycopg2.extensions, psycopg2.extras
 
 # Vklopi debug, da se bodo predloge same osvežile in da bomo dobivali
 # lepa sporočila o napakah.
-bottle.debug(True)
+debug(True)
 
 # Datoteka, v kateri je baza
 baza_datoteka = "bussinesNet.sqlite"
@@ -37,12 +37,12 @@ def password_hash(s):
 # Funkcija, ki v cookie spravi sporocilo
 #ce jih ne bi bilo, streznik ne bi vedel, kaj je v prejsnje ze naredil
 def set_sporocilo(tip, vsebina):
-    bottle.response.set_cookie('message', (tip, vsebina), path='/', secret=secret)
+    response.set_cookie('message', (tip, vsebina), path='/', secret=secret)
 
 # Funkcija, ki iz cookija dobi sporočilo, če je
 def get_sporocilo():
-    sporocilo = bottle.request.get_cookie('message', default=None, secret=secret)
-    bottle.response.delete_cookie('message')
+    sporocilo = request.get_cookie('message', default=None, secret=secret)
+    response.delete_cookie('message')
     return sporocilo
 
 # To smo dobili na http://stackoverflow.com/questions/1551382/user-friendly-time-format-in-python
@@ -95,7 +95,7 @@ def get_user(auto_login = True):
        na stran za prijavo ali vrni None (advisno od auto_login).
     """
     # Dobimo username iz piškotka
-    username = bottle.request.get_cookie('uporabnisko_ime', secret=secret)
+    username = request.get_cookie('uporabnisko_ime', secret=secret)
     # Preverimo, ali ta uporabnik obstaja
     if uporabnisko_ime is not None:
         c = baza.cursor()
@@ -108,9 +108,23 @@ def get_user(auto_login = True):
             return r
     # Če pridemo do sem, uporabnik ni prijavljen, naredimo redirect
     if auto_login:
-        bottle.redirect('/login/')
+        redirect('/login/')
     else:
         return None
+
+@get('/static/<filename:path>')
+def static(filename):
+    return static_file(filename, root='static')
+
+@get('/')
+def index():
+    cur.execute("SELECT * FROM zaposleni")
+    return template('zaposleni.html', zaposleni=cur)
+
+@get('/zaposleni')
+def zaposleni():
+    cur.execute("SELECT * FROM zaposleni ORDER BY priimek, ime")
+    return template('zaposleni.html', osebe=cur)
 
 
 
@@ -118,9 +132,9 @@ def get_user(auto_login = True):
 # Glavni program
 
 # priklopimo se na bazo
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODE) # se znebimo problemov s sumniki
-baza = psycopg2.connect(database=auth.db, host=auth.host, user=auth.user, password=auth.password)
-baza.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT) # onemogocimo transakcije
-cur = baza.cursor(cursor_factory=psycopg2.extras.DictCursor)
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE) # se znebimo problemov s šumniki
+conn = psycopg2.connect(database=auth.db, host=auth.host, user=auth.user, password=auth.password)
+conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT) # onemogočimo transakcije
+cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor) 
 # poženemo strežnik na portu 8080, glej http://localhost:8080/
-bottle.run(host='localhost', port=8080, reloader=True)
+run(host='localhost', port=8080)

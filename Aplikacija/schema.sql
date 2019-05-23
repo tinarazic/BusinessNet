@@ -1,18 +1,4 @@
-CREATE TABLE IF NOT EXISTS zaposleni (
- emso TEXT PRIMARY KEY,
- ime TEXT NOT NULL,
- priimek TEXT NOT NULL,
- datum_rojstva DATE NOT NULL,
- delovna_doba INTEGER NOT NULL,
- kraj TEXT NOT NULL,
- stopnja_izobrazbe INTEGER NOT NULL,
- v_oddelku TEXT NOT NULL REFERENCES oddelki (oddelek)
-  	ON DELETE CASCADE 
-	ON UPDATE CASCADE,
- na_projektu TEXT REFERENCES projekt (ime)
-	ON DELETE CASCADE 
-	ON UPDATE CASCADE
-);
+
 
 CREATE TABLE IF NOT EXISTS oddelki (
  id INTEGER PRIMARY KEY,
@@ -28,6 +14,28 @@ CREATE TABLE IF NOT EXISTS projekt (
  budget FLOAT
 );
 
+CREATE TABLE IF NOT EXISTS zaposleni (
+ emso TEXT PRIMARY KEY,
+ ime TEXT NOT NULL,
+ priimek TEXT NOT NULL,
+ datum_rojstva DATE NOT NULL,
+ delovna_doba INTEGER NOT NULL,
+ kraj TEXT NOT NULL,
+ stopnja_izobrazbe INTEGER NOT NULL,
+ v_oddelku TEXT NOT NULL REFERENCES oddelki (id)
+  	ON DELETE CASCADE 
+	ON UPDATE CASCADE,
+ na_projektu TEXT REFERENCES projekt (id)
+	ON DELETE CASCADE 
+	ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS uporabnik (
+  uporabnisko_ime TEXT PRIMARY KEY,
+  geslo TEXT NOT NULL,
+  ime TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS sporocila (
  id INTEGER,
  cas TIMESTAMP DEFAULT now(),
@@ -39,17 +47,13 @@ CREATE TABLE IF NOT EXISTS sporocila (
 
 CREATE TABLE IF NOT EXISTS komentarji (
  id INTEGER PRIMARY KEY,
- cas TIMESTAMP now(),
+ cas TIMESTAMP DEFAULT now(),
  komentar TEXT,
- projekt INTEGER id,
+ projekt INTEGER NOT NULL REFERENCES projekt (id),
  avtor TEXT REFERENCES uporabnik (uporabnisko_ime)
 );
 
-CREATE TABLE IF NOT EXISTS uporabnik (
-  uporabnisko_ime TEXT PRIMARY KEY,
-  geslo TEXT NOT NULL,
-  ime TEXT NOT NULL
-);
+
 
 
 
