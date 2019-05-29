@@ -1,5 +1,10 @@
 import auth
-#auth.db = "sem2018_%s" % auth.user
+
+# odkomentiraj, če želiš poganjati z uporabniškim imenom javnost
+# import auth_public as auth
+
+auth.db = "sem2019_anamario"
+# auth.db = "sem2019_%s" % auth.user
 
 # uvozimo psycopg2
 import psycopg2, psycopg2.extensions, psycopg2.extras

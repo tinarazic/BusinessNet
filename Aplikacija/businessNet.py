@@ -20,9 +20,9 @@ baza_datoteka = "bussinesNet.sqlite"
 # Mapa s statičnimi datotekami
 static_dir = "./static"
 
+
 # Skrivnost za kodiranje cookijev
 secret = "to skrivnost je zelo tezko uganiti 1094107c907cw982982c42"
-
 
 ######################################################################
 # Pomožne funkcije
