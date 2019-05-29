@@ -1,7 +1,7 @@
-import auth
+#import auth
 
 # odkomentiraj, če želiš poganjati z uporabniškim imenom javnost
-# import auth_public as auth
+import auth_public as auth
 
 auth.db = "sem2019_anamario"
 # auth.db = "sem2019_%s" % auth.user
