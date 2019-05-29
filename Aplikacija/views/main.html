@@ -1,0 +1,32 @@
+%rebase('base.html', title='BusinessNet')
+
+%if sporocilo:
+  <div class="alert {{sporocilo[0]}} alert-dismissable">{{sporocilo[1]}}
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  </div>
+%end
+
+<form id="projekt-forma" class="form-horizontal" method="post" action="/projekt/new/">
+<fieldset>
+
+<!-- Form Name -->
+<legend>Kva dogaja?</legend>
+
+<!-- Textarea
+<div class="control-group">
+  <label class="control-label" for="projekt"></label>
+  <div class="controls">                     
+    <textarea id="projekt" name="projekt"></textarea>
+  </div>
+</div> -->
+
+<!-- Button -->
+<div class="control-group">
+  <label class="control-label" for="singlebutton"></label>
+  <div class="controls">
+    <button id="singlebutton" name="singlebutton" class="btn btn-primary">Kulsko!</button>
+  </div>
+</div>
+
+</fieldset>
+</form>
