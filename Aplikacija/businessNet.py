@@ -137,7 +137,7 @@ def static(filename):
     return static_file(filename, root='static')
 
 @bottle.route("/")
-def main():
+def index():
     """Glavna stran."""
     # Iz cookieja dobimo uporabnika (ali ga preusmerimo na login, če
     # nima cookija)
@@ -147,7 +147,7 @@ def main():
     # Seznam zadnjih 10 tračev
     #ts = projekti()
     # Vrnemo predlogo za glavno stran
-    return bottle.template("main.html",
+    return bottle.template("index.html",
                            ime=ime,
                            username=username,
                            #projekti=ts,
@@ -292,7 +292,7 @@ def user_change(username):
     return user_wall(username, sporocila=sporocila)
 
    
-# @get('/')
+# @get('/index/')
 # def index():
 #     cur.execute("SELECT * FROM zaposleni")
 #     return template('zaposleni.html', zaposleni=cur)
