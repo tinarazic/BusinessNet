@@ -145,12 +145,12 @@ def index():
     # Morebitno sporočilo za uporabnika
     sporocilo = get_sporocilo()
     # Seznam zadnjih 10 tračev
-    #ts = projekti()
+    ts = projekti()
     # Vrnemo predlogo za glavno stran
     return bottle.template("index.html",
                            ime=ime,
                            username=username,
-                           #projekti=ts,
+                           projekti=ts,
                            sporocilo=sporocilo)
 
 @bottle.get("/login/")
@@ -290,6 +290,48 @@ def user_change(username):
     # Prikažemo stran z uporabnikom, z danimi sporočili. Kot vidimo,
     # lahko kar pokličemo funkcijo, ki servira tako stran
     return user_wall(username, sporocila=sporocila)
+
+
+def projekti(limit=10):
+    """Vrni dano število projektov (privzeto 10). Rezultat je seznam, katerega
+       elementi so oblike [id, ime, status, datum_zacetka, datum_konca, budget, porabljeno, narejeno, vsebina, zaposleni],
+       pri čemer so komentarji seznam elementov oblike [ime, v oddelku, na projektu],
+       urejeni po času objave.
+    """
+    c = baza.cursor()
+    c.execute(
+    """SELECT id, projekt.ime, status, datum_zacetka, datum_konca, budget, porabljeno, narejeno, vsebina, zaposleni
+       FROM projekt JOIN zaposleni ON projekt.id = zaposleni.na_projektu
+       ORDER BY datum_konca DESC
+       LIMIT %s
+    """, [limit])
+    # Rezultat predelamo v nabor.
+    projekti = tuple(c)
+    # Nabor id-jev tračev, ki jih bomo vrnili
+    tids = (projekt[0] for projekt in projekti)
+    # Logično bi bilo, da bi zdaj za vsak trač naredili en SELECT za
+    # komentarje tega trača. Vendar je drago delati veliko število
+    # SELECTOV, zato se raje potrudimo in napišemo en sam SELECT.
+    c.execute(
+    """SELECT projekt.id, username, projekt.ime, komentar.vsebina
+       FROM
+         (komentar JOIN projekt ON komentar.projekt = projekt.id)
+          JOIN uporabnik ON uporabnik.username = komentar.avtor
+       WHERE 
+         projekt.id IN (SELECT id FROM projekt ORDER BY cas DESC LIMIT %s)
+       ORDER BY
+         komentar.cas""", [limit])
+    # Rezultat poizvedbe ima nerodno obliko, pretvorimo ga v slovar,
+    # ki id trača preslika v seznam pripadajočih komentarjev.
+    # Najprej pripravimo slovar, ki vse id-je tračev slika v prazne sezname.
+    komentar = { tid : [] for tid in tids }
+    # Sedaj prenesemo rezultate poizvedbe v slovar
+    for (tid, username, ime, vsebina) in c:
+        komentar[tid].append((username, ime, vsebina))
+    c.close()
+    # Vrnemo nabor, kot je opisano v dokumentaciji funkcije:
+    return ((tid, u, i, pretty_date(c), v, komentar[tid])
+            for (tid, u, i, c, v) in projekti)
 
    
 # @get('/index/')
