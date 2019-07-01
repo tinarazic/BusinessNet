@@ -229,6 +229,70 @@ def register_post():
         bottle.response.set_cookie('username', username, path='/', secret=secret)
         bottle.redirect("/")
 
+
+def zaposleni(imes, priimek, delovna_doba, stopnja_izobrazbe, oddelek):
+    c = baza.cursor()
+    c.execute(
+        ''' SELECT ime, priimek, delovna_doba, stopnja_izobrazbe, oddelek
+        FROM zaposleni JOIN oddelki ON zaposleni.v_oddelku = oddelki.id 
+        WHERE (ime, priimek, delovna_doba, stopnja_izobrazbe, oddelek) 
+        = (%s, %s, %s, %s, %s) ''', [imes, priimek, delovna_doba, stopnja_izobrazbe, oddelek])
+    sodelavci = tuple(c)
+    return sodelavci
+
+@bottle.get("/zaposleni/")
+def zaposleni_get():
+    """Serviraj formo za zaposlene."""
+    (username, ime) = get_user()
+    return bottle.template("zaposleni.html",
+                            username=username,
+                            ime=ime,
+                            sodelavec=None,
+                            imes=None,
+                            priimek=None,
+                            delovna_doba=None,
+                            stopnja_izobrazbe=None,
+                            oddelek=None)
+
+@bottle.post("/zaposleni/")
+def zaposleni_post():
+    """Poišči sodelavca."""
+    (username, ime) = get_user()
+    imes = bottle.request.forms.imes
+    priimek = bottle.request.forms.priimek
+    delovna_doba = bottle.request.forms.delovna_doba
+    stopnja_izobrazbe = bottle.request.forms.stopnja_izobrazbe
+    oddelek = bottle.request.forms.oddelek
+    sodelavci = zaposleni(imes, priimek, delovna_doba, stopnja_izobrazbe, oddelek)
+    return bottle.template("sodelavci.html",
+                            username=username,
+                            ime=ime,
+                            sodelavci=sodelavci)
+    
+
+@bottle.get("/sodelavci/")
+def sodelavci_get():
+    "Vsi sodelavci"
+    (username, ime) = get_user()
+    return bottle.template("sodelavci.html",
+                            username=username,
+                            ime=ime)
+
+@bottle.get('/user/')
+def user():
+    (username, ime) = get_user()
+    c = baza.cursor()
+    c.execute('''SELECT zaposleni.ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe FROM zaposleni JOIN uporabnik ON 
+    uporabnik.emso=zaposleni.emso WHERE username=%s ''', [username])
+    podatki = tuple(c)
+    return template('user.html', username=username, ime=ime, podatki=podatki)
+
+@bottle.get('/izziv/')
+def user():
+    (username, ime) = get_user()
+    return template('izziv.html', username=username, ime=ime)
+
+############################################################################################################################
 @bottle.route("/user/<username>/")
 def user_wall(username, sporocila=[]):
     """Prikaži stran uporabnika"""
@@ -343,10 +407,6 @@ def user_change(username):
 #     cur.execute("SELECT * FROM zaposleni")
 #     return template('zaposleni.html', zaposleni=cur)
 
-# @get('/zaposleni')
-# def zaposleni():
-#     cur.execute("SELECT * FROM zaposleni ORDER BY priimek, ime")
-#     return template('zaposleni.html', osebe=cur)
 
 
 ######################################################################

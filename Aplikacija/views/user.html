@@ -1,0 +1,30 @@
+%rebase('base.html', title='O meni:', username=username)
+
+%for (ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe) in podatki:
+<!-- Basic Card Example -->
+
+<div class="card shadow mb-10">
+    
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">{{ime}} {{priimek}}</h6>
+      </div>
+      <div class="card-body">
+          <div class="row">
+          <div class="col-lg-6">
+              <ul>
+                  <li><strong></strong>Datum rojstva:</strong> {{datum_rojstva}}</li>
+                  <li><strong></strong>Delovna doba:</strong> {{delovna_doba}}</li>
+                  <li></strong>Kraj:</strong> {{kraj}}</li>
+                  <li></strong>Stopnja izobrazbe:</strong> {{stopnja_izobrazbe}}</li>
+              </ul>
+          </div>
+          <div class="col-lg-6">
+            <div class="p-3 d">
+            <img src="../static/img/user.png"  width="400" height="500">
+            </div>
+          </div>
+          </div>
+      </div>   
+      </div>
+      </div>
+</div>

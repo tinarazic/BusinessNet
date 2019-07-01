@@ -49,7 +49,7 @@
 
       <!-- Nav Item - Pages Collapse Menu -->
       <li class="nav-item">
-        <a class="nav-link" href="/omeni/">
+        <a class="nav-link" href="/user/">
           <i class="fas fa-laugh-wink"></i>
           <span>O meni</span>
         </a>
@@ -64,7 +64,7 @@
 
       <!-- Nav Item - Utilities Collapse Menu -->
       <li class="nav-item">
-        <a class="nav-link" href="/projekti">
+        <a class="nav-link" href="/projekti/">
           <i class="fas fa-fw fa-wrench"></i>
           <span>Moji projekti</span>
         </a>
@@ -89,7 +89,7 @@
 
       <!-- Nav Item - Pages Collapse Menu -->
       <li class="nav-item">
-        <a class="nav-link" href="/zaposleni">
+        <a class="nav-link" href="/zaposleni/">
           <i class="fas fa-laugh-wink"></i>
           <span>Sodelavci</span>
         </a>
@@ -325,10 +325,11 @@
         <div class="container-fluid">
 
             <!-- Page Heading -->
-            <h1 class="h3 mb-4 text-gray-800">Blank Page</h1>
-  
+            <h1 class="h3 mb-4 text-gray-800">{{title}}</h1>
+
           </div>
           <!-- /.container-fluid -->
+          {{ !base }}
   
         </div>
         <!-- End of Main Content -->
@@ -337,7 +338,7 @@
         <footer class="sticky-footer bg-white">
           <div class="container my-auto">
             <div class="copyright text-center my-auto">
-              <span>Copyright &copy; Your Website 2019</span>
+              <span>&copy; BusinessNet 2019</span>
             </div>
           </div>
         </footer>
@@ -366,8 +367,8 @@
         </div>
         <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-          <a class="btn btn-primary" href="/login/">Logout</a>
+          <button class="btn btn-secondary" type="button" data-dismiss="modal">Prekliči</button>
+          <a class="btn btn-primary" href="/login/">Odjava</a>
         </div>
       </div>
     </div>
