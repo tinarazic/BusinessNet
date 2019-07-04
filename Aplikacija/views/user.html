@@ -1,30 +1,54 @@
 %rebase('base.html', title='O meni:', username=username)
 
-%for (ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe) in podatki:
+%for (emso, ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe, oddelek, username, uporabnik_ime) in podatki:
 <!-- Basic Card Example -->
 
+<div class="row px-5">
+<div class="col-lg-6">
 <div class="card shadow mb-10">
-    
       <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">{{ime}} {{priimek}}</h6>
+        <h6 class="m-0 font-weight-bold text-primary">{{username}}</h6>
       </div>
       <div class="card-body">
-          <div class="row">
-          <div class="col-lg-6">
+          <div class="col-lg-9">
               <ul>
-                  <li><strong></strong>Datum rojstva:</strong> {{datum_rojstva}}</li>
-                  <li><strong></strong>Delovna doba:</strong> {{delovna_doba}}</li>
+                  <li></strong>Vzdevek:</strong> {{uporabnik_ime}}</li>
+                  <li><strong></strong>Ime in Priimek:</strong> {{ime}} {{priimek}}</li>
+                  <li></strong>Datum rojstva:</strong> {{datum_rojstva}}</li>
                   <li></strong>Kraj:</strong> {{kraj}}</li>
+                  <li></strong>Oddelek:</strong> {{oddelek}}</li>
+                  <li><strong></strong>Delovna doba:</strong> {{delovna_doba}}</li>
                   <li></strong>Stopnja izobrazbe:</strong> {{stopnja_izobrazbe}}</li>
+                  <li><strong></strong>Delovna doba:</strong> {{delovna_doba}}</li>
               </ul>
           </div>
-          <div class="col-lg-6">
-            <div class="p-3 d">
-            <img src="../static/img/user.png"  width="400" height="500">
-            </div>
-          </div>
-          </div>
-      </div>   
       </div>
-      </div>
+</div>
+</div>
+<div class="col-lg-6">
+    <img src="../static/img/user.png"  width="400" height="500">
+</div>
+
+</div>
+
+<p>
+
+</p>
+<div class="row px-5">
+    <div class="col-lg-10">
+              <!-- Project Card Example -->
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <a class="m-0 font-weight-bold text-primary" href="/projekti/">Projekti</a>
+                </div>
+                <div class="card-body">
+                  %for (id, projekt_ime, status, datum_začetka, datum_konca, budget, porabljeno, narejeno, vsebina, projekt_id, emso1, username, password, emso2, uporabnik_ime) in projekti_glavna:
+                  <h4 class="small font-weight-bold">{{projekt_ime}} <span class="float-right">{{narejeno}} %</span></h4>
+                  <div class="progress mb-4">
+                    <div class="progress-bar bg-danger" role="progressbar" style="width: {{narejeno}}%" aria-valuenow="20" aria-valuemin="50" aria-valuemax="100"></div>
+                  </div>
+                  %end
+                </div>
+              </div>
+</div>
 </div>

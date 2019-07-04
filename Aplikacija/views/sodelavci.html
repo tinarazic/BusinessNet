@@ -1,20 +1,26 @@
   
   %rebase('base.html', title='Moji sodelavci:', username=username)
   
-  %for (ime, priimek, delovna_doba, stopnja_izobrazbe, oddelek) in sodelavci:
+  %for (emso, ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe, oddelek, username, uporabnik_ime) in sodelavci:
     <!-- Collapsable Card Example -->
     <div class="card shadow mb-4">
           <!-- Card Header - Accordion -->
           <a href="#collapseCardExample" class="d-block card-header py-3" data-toggle="collapse" role="button" aria-expanded="true" aria-controls="collapseCardExample">
-            <h6 class="m-0 font-weight-bold text-primary">{{ime}} {{priimek}}</h6>
+            <h6 class="m-0 font-weight-bold text-primary">{{username}}</h6>
           </a>
           <!-- Card Content - Collapse -->
           <div class="collapse show" id="collapseCardExample">
             <div class="card-body">
                 <ul>
+                    <li></strong>Vzdevek:</strong> {{uporabnik_ime}}</li>
+                    <li><strong></strong>Ime in Priimek:</strong> {{ime}} {{priimek}}</li>
+                    <li></strong>Datum rojstva:</strong> {{datum_rojstva}}</li>
+                    <li></strong>Kraj:</strong> {{kraj}}</li>
+                    <li></strong>Oddelek:</strong> {{oddelek}}</li>
                     <li><strong></strong>Delovna doba:</strong> {{delovna_doba}}</li>
                     <li></strong>Stopnja izobrazbe:</strong> {{stopnja_izobrazbe}}</li>
-                    <li></strong>Oddelek:</strong> {{oddelek}}</li>
+                    <li><strong></strong>Delovna doba:</strong> {{delovna_doba}}</li>
+                    
                 </ul>
             </div>
           </div>

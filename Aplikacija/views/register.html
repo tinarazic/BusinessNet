@@ -62,11 +62,19 @@
               </form>
               <hr>
               <div class="text-center">
-                <a class="small" href="/forgot-password/">Pozabljeno geslo?</a>
-              </div>
-              <div class="text-center">
                 <a class="small" href="/login/"">Že imaš račun? Vpiši se!</a>
               </div>
+              <p>
+                    
+              </p>
+              %if napaka:
+              <a href="#" class="btn btn-warning btn-icon-split">
+                  <span class="icon text-white-50">
+                    <i class="fas fa-exclamation-triangle"></i>
+                  </span>
+                  <span class="text">{{napaka}}</span>
+                </a>
+              %end
             </div>
           </div>
         </div>

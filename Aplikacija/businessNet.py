@@ -143,15 +143,15 @@ def index():
     # nima cookija)
     (username, ime) = get_user()
     # Morebitno sporočilo za uporabnika
-    sporocilo = get_sporocilo()
-    # Seznam zadnjih 10 tračev
-    # ts = projekti()
+    #sporocilo = get_sporocilo()
+    # Seznam projektov userja
+    ts = projekti_glavna()
     # Vrnemo predlogo za glavno stran
     return bottle.template("index.html",
                            ime=ime,
                            username=username,
-                        #    projekti=ts,
-                           sporocilo=sporocilo)
+                           projekti_glavna=ts)
+                           #sporocilo=sporocilo
 
 @bottle.get("/login/")
 def login_get():
@@ -212,14 +212,14 @@ def register_post():
                                username=username,
                                ime=ime,
                                emso=emso,
-                               napaka='To uporabniško ime je že zavzeto')
+                               napaka='To uporabniško ime je že zavzeto.')
     elif not password1 == password2:
         # Geslo se ne ujemata
         return bottle.template("register.html",
                                username=username,
                                ime=ime,
                                emso=emso,
-                               napaka='Gesli se ne ujemata')
+                               napaka='Gesli se ne ujemata.')
     else:
         # Vse je v redu, vstavi novega uporabnika v bazo
         password = password_md5(password1)
@@ -229,14 +229,18 @@ def register_post():
         bottle.response.set_cookie('username', username, path='/', secret=secret)
         bottle.redirect("/")
 
-
-def zaposleni(imes, priimek, delovna_doba, stopnja_izobrazbe, oddelek):
+def zaposleni(imes, priimek, oddelek):
     c = baza.cursor()
     c.execute(
-        ''' SELECT ime, priimek, delovna_doba, stopnja_izobrazbe, oddelek
-        FROM zaposleni JOIN oddelki ON zaposleni.v_oddelku = oddelki.id 
-        WHERE (ime, priimek, delovna_doba, stopnja_izobrazbe, oddelek) 
-        = (%s, %s, %s, %s, %s) ''', [imes, priimek, delovna_doba, stopnja_izobrazbe, oddelek])
+        '''WITH C1 AS(
+            SELECT *
+            FROM zaposleni JOIN oddelki ON zaposleni.v_oddelku = oddelki.id
+            )
+            SELECT  c1.emso, c1.ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe, oddelek, username, uporabnik.ime FROM
+            C1 LEFT JOIN uporabnik ON C1.emso = uporabnik.emso
+            WHERE C1.ime LIKE %s
+            and priimek LIKE %s
+            and oddelek LIKE %s ''', (imes, priimek, oddelek))
     sodelavci = tuple(c)
     return sodelavci
 
@@ -247,11 +251,8 @@ def zaposleni_get():
     return bottle.template("zaposleni.html",
                             username=username,
                             ime=ime,
-                            sodelavec=None,
                             imes=None,
                             priimek=None,
-                            delovna_doba=None,
-                            stopnja_izobrazbe=None,
                             oddelek=None)
 
 @bottle.post("/zaposleni/")
@@ -260,10 +261,8 @@ def zaposleni_post():
     (username, ime) = get_user()
     imes = bottle.request.forms.imes
     priimek = bottle.request.forms.priimek
-    delovna_doba = bottle.request.forms.delovna_doba
-    stopnja_izobrazbe = bottle.request.forms.stopnja_izobrazbe
     oddelek = bottle.request.forms.oddelek
-    sodelavci = zaposleni(imes, priimek, delovna_doba, stopnja_izobrazbe, oddelek)
+    sodelavci = zaposleni(imes, priimek, oddelek)
     return bottle.template("sodelavci.html",
                             username=username,
                             ime=ime,
@@ -279,18 +278,47 @@ def sodelavci_get():
                             ime=ime)
 
 @bottle.get('/user/')
-def user():
+def user_get():
     (username, ime) = get_user()
+    ts = projekti_glavna()
     c = baza.cursor()
-    c.execute('''SELECT zaposleni.ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe FROM zaposleni JOIN uporabnik ON 
-    uporabnik.emso=zaposleni.emso WHERE username=%s ''', [username])
+    c.execute(
+    '''WITH C1 AS(
+            SELECT *
+            FROM zaposleni JOIN oddelki ON zaposleni.v_oddelku = oddelki.id
+            )
+            SELECT  c1.emso, c1.ime, priimek, datum_rojstva, delovna_doba, kraj, stopnja_izobrazbe, oddelek, username, uporabnik.ime FROM
+            C1 LEFT JOIN uporabnik ON C1.emso = uporabnik.emso
+            WHERE username=%s ''', [username])    
     podatki = tuple(c)
-    return template('user.html', username=username, ime=ime, podatki=podatki)
+    return template('user.html', username=username, ime=ime, podatki=podatki, projekti_glavna=ts)
 
 @bottle.get('/izziv/')
-def user():
+def izziv_get():
     (username, ime) = get_user()
     return template('izziv.html', username=username, ime=ime)
+
+@bottle.get("/igra/")
+def igra_get():
+    (username, ime) = get_user()
+    return bottle.template("igra.html",
+                            username=username,
+                            ime=ime)
+
+def projekti_glavna():
+    c = baza.cursor()
+    (username, ime)= get_user()
+    c.execute(
+        '''WITH C1 AS (
+           SELECT * FROM projekt JOIN delavci ON 
+           projekt.id=delavci.projekt_id)
+           SELECT * FROM C1 JOIN uporabnik ON   
+           c1.emso=uporabnik.emso 
+           WHERE username=%s
+           ORDER BY narejeno ASC ''', [username])
+    projekti_glavna = tuple(c)
+    return projekti_glavna
+
 
 ############################################################################################################################
 @bottle.route("/user/<username>/")
@@ -317,6 +345,7 @@ def user_wall(username, sporocila=[]):
                         #    trac_count=t,
                         #    komentar_count=k,
                            sporocila=sporocila)
+
     
 @bottle.post("/user/<username>/")
 def user_change(username):
@@ -358,57 +387,7 @@ def user_change(username):
     # Prikažemo stran z uporabnikom, z danimi sporočili. Kot vidimo,
     # lahko kar pokličemo funkcijo, ki servira tako stran
     return user_wall(username, sporocila=sporocila)
-
-
-# def projekti(limit=10):
-#     """Vrni dano število projektov (privzeto 10). Rezultat je seznam, katerega
-#        elementi so oblike [id, ime, status, datum_zacetka, datum_konca, budget, porabljeno, narejeno, vsebina],
-#        pri čemer so komentarji seznam elementov oblike [id, cas, vsebina, projekt, avtor],
-#        urejeni po času objave.
-#     """
-#     c = baza.cursor()
-#     c.execute(
-#     """SELECT id, ime, status, datum_zacetka, datum_konca, budget, porabljeno, narejeno, vsebina, ime, priimek
-#        FROM projekt JOIN zaposleni ON projekt.id = zaposleni.na_projektu
-#        ORDER BY datum_konca desc
-#        LIMIT %s
-#     """, [limit])
-#     # Rezultat predelamo v nabor.
-#     projekti = tuple(c)
-#     # Nabor id-jev projektov, ki jih bomo vrnili
-#     tids = (projekt[0] for projekt in projekti)
-#     # Logično bi bilo, da bi zdaj za vsak projekt naredili en SELECT za
-#     # komentarje tega projekta. Vendar je drago delati veliko število
-#     # SELECTOV, zato se raje potrudimo in napišemo en sam SELECT.
-#     c.execute(
-#     """SELECT projekt.id, username, projekt.ime, komentar.vsebina
-#        FROM
-#          (komentar JOIN projekt ON komentar.projekt = projekt.id)
-#           JOIN uporabnik ON uporabnik.username = komentar.avtor
-#        WHERE 
-#          projekt.id IN (SELECT id FROM projekt ORDER BY cas DESC LIMIT %s)
-#        ORDER BY
-#          komentar.cas""", [limit])
-#     # Rezultat poizvedbe ima nerodno obliko, pretvorimo ga v slovar,
-#     # ki id trača preslika v seznam pripadajočih komentarjev.
-#     # Najprej pripravimo slovar, ki vse id-je tračev slika v prazne sezname.
-#     komentar = { tid : [] for tid in tids }
-#     # Sedaj prenesemo rezultate poizvedbe v slovar
-#     for (tid, username, ime, vsebina) in c:
-#         komentar[tid].append((username, ime, vsebina))
-#     c.close()
-#     # Vrnemo nabor, kot je opisano v dokumentaciji funkcije:
-#     return ((tid, u, i, pretty_date(c), v, komentar[tid])
-#             for (tid, u, i, c, v) in projekti)
-
-   
-# @get('/index/')
-# def index():
-#     cur.execute("SELECT * FROM zaposleni")
-#     return template('zaposleni.html', zaposleni=cur)
-
-
-
+ 
 ######################################################################
 # Glavni program
 
