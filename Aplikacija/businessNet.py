@@ -146,11 +146,13 @@ def index():
     #sporocilo = get_sporocilo()
     # Seznam projektov userja
     ts = projekti_glavna()
+    budget = denar()
     # Vrnemo predlogo za glavno stran
     return bottle.template("index.html",
                            ime=ime,
                            username=username,
-                           projekti_glavna=ts)
+                           projekti_glavna=ts,
+                           denar=budget)
                            #sporocilo=sporocilo
 
 @bottle.get("/login/")
@@ -319,6 +321,15 @@ def projekti_glavna():
     projekti_glavna = tuple(c)
     return projekti_glavna
 
+
+def denar():
+    c = baza.cursor()
+    (username, ime)= get_user()
+    c.execute(
+        '''SELECT SUM(BUDGET) as budget_total, SUM(PORABLJENO) as porabljeno_total
+            FROM projekt''')
+    denar = tuple(c)
+    return denar
 
 ############################################################################################################################
 @bottle.route("/user/<username>/")
