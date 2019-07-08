@@ -1,4 +1,4 @@
-%rebase('base.html',  title='Moji projekti', username=username, projekti=projekti, kom=kom, statusi=statusi)
+%rebase('base.html',  title='Moji projekti', username=username, projekti=projekti, kom=kom, statusi=statusi, useers=useers)
 
 <link rel="stylesheet" href="../static/css/sb-admin-2.css">
 
@@ -74,6 +74,20 @@
                                  </div>
                                </div>
                              </div>
+                        <form class="user" role="form" method="post" action="." >
+                            <span class="label-input100">Dodaj sodelavca na projekt:</span><br>
+                            <input type="hidden" class="form-control" id="getIdOfProject"
+                             value={{ id }} name = "proo_id" >
+                            <select name="user">
+                            %for user in useers:
+                            <option value="{{user}}">{{user}}</option>
+                            %end
+                            </select> <br>
+                            <button class="btn btn-block btn-sm" type="submit" style="width:90px" >
+                                Dodaj!
+                            </button>
+                        </form>
+
                         </div>
 
 
@@ -100,9 +114,8 @@
                      <a name="projekt-{{ id }}" >
                      <div class="panel-body">
                        <form method="post" action=".">
-                           Id projekta:
-                          <input type="proo_id" class="form-control form-control-user" id="getIdOfProject"
-                            value = "{{ id }}" name = "proo_id" readonly>
+                          <input type="hidden" class="form-control form-control-user" id="getIdOfProject"
+                            value = {{ id }} name = "proo_id" readonly>
                           <textarea class="kommm" name="komm" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea>
                           <button class="btn btn-primary btn-user btn-block" type="submit">
                             Komentiraj
@@ -141,11 +154,8 @@
                         <input type="number" step="0.01" id="narejeno" name="nar" size="65"><br>
                         <span class="label-input100">Opis</span><br>
                         <textarea class="opis" name="opis" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea><br>
-
-
-
-                        <button class="btn btn-primary btn-user btn-block" type="submit" aria-setsize="20">
-                            Dodaj projekt
+                        <button class="btn btn-primary" type="submit width:50px" aria-setsize="20">
+                            Dodaj !
                         </button>
 </form>
 </div>

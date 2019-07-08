@@ -39,12 +39,12 @@ def password_md5(s):
     h.update(s.encode('utf-8'))
     return h.hexdigest()
 
-# def password_hash(s):
-#     """Vrni SHA-512 hash danega UTF-8 niza. Gesla vedno spravimo v bazo
-#        kodirana s to funkcijo."""
-#     h = hashlib.sha512()
-#     h.update(s.encode('utf-8'))
-#     return h.hexdigest()
+def password_hash(s):
+    """Vrni SHA-512 hash danega UTF-8 niza. Gesla vedno spravimo v bazo
+       kodirana s to funkcijo."""
+    h = hashlib.sha512()
+    h.update(s.encode('utf-8'))
+    return h.hexdigest()
 
 # Funkcija, ki v cookie spravi sporocilo
 #ce jih ne bi bilo, streznik ne bi vedel, kaj je v prejsnje ze naredil
@@ -59,47 +59,6 @@ def get_sporocilo():
 
 # To smo dobili na http://stackoverflow.com/questions/1551382/user-friendly-time-format-in-python
 # in predelali v slovenščino. Da se še izboljšati, da bo pravilno delovala dvojina itd.
-def pretty_date(time):
-    """
-    Predelaj čas (v formatu Unix epoch) v opis časa, na primer
-    'pred 4 minutami', 'včeraj', 'pred 3 tedni' ipd.
-    """
-
-    now = datetime.now()
-    if type(time) is int:
-        diff = now - datetime.fromtimestamp(time)
-    elif isinstance(time,datetime):
-        diff = now - time 
-    elif not time:
-        diff = now - now
-    second_diff = diff.seconds
-    day_diff = diff.days
-
-    if day_diff < 0:
-        return ''
-
-    if day_diff == 0:
-        if second_diff < 10:
-            return "zdaj"
-        if second_diff < 60:
-            return "pred " + str(second_diff) + " sekundami"
-        if second_diff < 120:
-            return  "pred minutko"
-        if second_diff < 3600:
-            return "pred " + str( second_diff // 60 ) + " minutami"
-        if second_diff < 7200:
-            return "pred eno uro"
-        if second_diff < 86400:
-            return "pred " + str( second_diff // 3600 ) + " urami"
-    if day_diff == 1:
-        return "včeraj"
-    if day_diff < 7:
-        return "pred " + str(day_diff) + " dnevi"
-    if day_diff < 31:
-        return "pred " + str(day_diff//7) + " tedni"
-    if day_diff < 365:
-        return "pred " + str(day_diff//30) + " meseci"
-    return "pred " + str(day_diff//365) + " leti"
 
 def get_user(auto_login = True):
     """Poglej cookie in ugotovi, kdo je prijavljeni uporabnik,
@@ -107,7 +66,7 @@ def get_user(auto_login = True):
        na stran za prijavo ali vrni None (advisno od auto_login).
     """
     # Dobimo username iz piškotka
-    username = request.get_cookie('username', secret=secret)
+    username = bottle.request.get_cookie('username', secret=secret)
     # Preverimo, ali ta uporabnik obstaja
     if username is not None:
         c = baza.cursor()
@@ -120,7 +79,7 @@ def get_user(auto_login = True):
             return r
     # Če pridemo do sem, uporabnik ni prijavljen, naredimo redirect
     if auto_login:
-        redirect('/login/')
+        bottle.redirect('/login/')
     else:
         return None
 
@@ -134,7 +93,7 @@ def get_user(auto_login = True):
 def static(filename):
     """Splošna funkcija, ki servira vse statične datoteke iz naslova
        /static/..."""
-    return static_file(filename, root='static')
+    return bottle.static_file(filename, root='static')
 
 @bottle.route("/")
 def index():
@@ -155,17 +114,21 @@ def index():
                            denar=budget,
                            sporocila=None)
 
+
 @bottle.get("/login/")
 def login_get():
     """Serviraj formo za login."""
     return bottle.template("login.html",
                            napaka=None,
                            username=None)
+
+
 @bottle.get("/logout/")
 def logout():
     """Pobriši cookie in preusmeri na login."""
     bottle.response.delete_cookie('username')
     bottle.redirect('/login/')
+
 
 @bottle.post("/login/")
 def login_post():
@@ -188,6 +151,7 @@ def login_post():
         bottle.response.set_cookie('username', username, path='/', secret=secret)
         bottle.redirect("/")
 
+
 @bottle.get("/register/")
 def login_get():
     """Prikaži formo za registracijo."""
@@ -196,6 +160,7 @@ def login_get():
                            ime=None,
                            emso=None,
                            napaka=None)
+
 
 @bottle.post("/register/")
 def register_post():
@@ -231,6 +196,7 @@ def register_post():
         bottle.response.set_cookie('username', username, path='/', secret=secret)
         bottle.redirect("/")
 
+
 def zaposleni(imes, priimek, oddelek):
     c = baza.cursor()
     c.execute(
@@ -246,6 +212,7 @@ def zaposleni(imes, priimek, oddelek):
     sodelavci = tuple(c)
     return sodelavci
 
+
 @bottle.get("/zaposleni/")
 def zaposleni_get():
     """Serviraj formo za zaposlene."""
@@ -256,6 +223,7 @@ def zaposleni_get():
                             imes=None,
                             priimek=None,
                             oddelek=None)
+
 
 @bottle.post("/zaposleni/")
 def zaposleni_post():
@@ -279,6 +247,7 @@ def sodelavci_get():
                             username=username,
                             ime=ime)
 
+
 @bottle.get('/user/')
 def user_get():
     (username, ime, emso) = get_user()
@@ -293,12 +262,14 @@ def user_get():
             C1 LEFT JOIN uporabnik ON C1.emso = uporabnik.emso
             WHERE username=%s ''', [username])    
     podatki = tuple(c)
-    return template('user.html', username=username, ime=ime, podatki=podatki, projekti_glavna=ts)
+    return bottle.template('user.html', username=username, ime=ime, podatki=podatki, projekti_glavna=ts)
+
 
 @bottle.get('/izziv/')
 def izziv_get():
     (username, ime, emso) = get_user()
-    return template('izziv.html', username=username, ime=ime)
+    return bottle.template('izziv.html', username=username, ime=ime)
+
 
 @bottle.get("/igra/")
 def igra_get():
@@ -306,6 +277,7 @@ def igra_get():
     return bottle.template("igra.html",
                             username=username,
                             ime=ime)
+
 
 def projekti_glavna():
     c = baza.cursor()
@@ -372,12 +344,19 @@ def nov_projekt():
     c.close()
 
 
-
 @bottle.get("/projekti/")
 def projekti_get():
      """Vrne projekte uporabnika in komentarje pod projekti
      """
      (username, ime, emso) = get_user()
+     c = baza.cursor()
+     c.execute("""SELECT username FROM uporabnik""")
+     users = tuple(c)
+     useers = []
+     for user in users:
+        useers += user
+
+     c.close()
      c = baza.cursor()
      c.execute(
      """SELECT DISTINCT projekt.id, projekt.ime, status, datum_zacetka, datum_konca, budget, porabljeno, narejeno, vsebina, delavci.emso
@@ -394,7 +373,7 @@ def projekti_get():
          else:
              kom[i] = ()
      statusi = ['aktiven', 'končan']
-     return bottle.template("projekti.html", username=username, ime=ime, projekti=projekti, kom=kom, statusi=statusi)
+     return bottle.template("projekti.html", username=username, ime=ime, projekti=projekti, kom=kom, statusi=statusi, useers=useers)
 
 
 @bottle.post("/projekti/")
@@ -409,12 +388,21 @@ def nov_komentar_projekt():
         c.execute("INSERT INTO komentar (avtor, vsebina, projekt_id) VALUES (%s, %s, %s)",
                   [username, komentar_1, pro_id])
         c.close()
+    elif bottle.request.forms.user:
+        delavec = bottle.request.forms.user
+        pro_id = bottle.request.forms.proo_id
+        c = baza.cursor()
+        c.execute("SELECT emso FROM uporabnik WHERE username=%s",
+                                 [delavec])
+        dela = tuple(c)
+        delavec_emso = []
+        for d in dela:
+            delavec_emso += d
+        c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, %s)",
+                    [pro_id, delavec_emso[0]])
     else:
         nov_projekt()
     return bottle.redirect("/projekti/")
-
-
-
 
 
 @bottle.get("/sporocila/")
@@ -467,12 +455,7 @@ def user_wall():
     """Prikaži stran uporabnika"""
     (username_login, ime_login, emso_login) = get_user()
     return bottle.template("spremeni-geslo.html",
-                        #   uporabnik_ime=ime,
-                        #   uporabnik=username,
                            username=username_login,
-                        #   ime=ime_login,
-                        #    trac_count=t,
-                        #    komentar_count=k,
                            napaka=None)
 
     
@@ -506,8 +489,7 @@ def user_change():
         bottle.template("spremeni-geslo.html", username=username, napaka='Napačno staro geslo')
 
     c.close()
-    # Prikažemo stran z uporabnikom, z danimi sporočili. Kot vidimo,
-    # lahko kar pokličemo funkcijo, ki servira tako stran
+
 
  
 ######################################################################
