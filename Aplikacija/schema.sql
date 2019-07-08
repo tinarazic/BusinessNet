@@ -6,12 +6,16 @@ CREATE TABLE IF NOT EXISTS oddelki (
 );
 
 CREATE TABLE IF NOT EXISTS projekt (
- id INTEGER PRIMARY KEY,
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
  ime TEXT NOT NULL,
  status TEXT NOT NULL,
  datum_zacetka DATE NOT NULL,
  datum_konca DATE NOT NULL,
- budget FLOAT
+ budget DOUBLE PRECISION,
+ porabljeno DOUBLE PRECISION,
+ narejeno INTEGER,
+ vsebina TEXT NOT NULL,
+ CONSTRAINT status CHECK (status IN ('aktiven', 'končan')))
 );
 
 CREATE TABLE IF NOT EXISTS zaposleni (
@@ -23,10 +27,10 @@ CREATE TABLE IF NOT EXISTS zaposleni (
  kraj TEXT NOT NULL,
  stopnja_izobrazbe INTEGER NOT NULL,
  v_oddelku TEXT NOT NULL REFERENCES oddelki (id)
-  	ON DELETE CASCADE 
+  	ON DELETE CASCADE
 	ON UPDATE CASCADE,
  na_projektu TEXT REFERENCES projekt (id)
-	ON DELETE CASCADE 
+	ON DELETE CASCADE
 	ON UPDATE CASCADE
 );
 
@@ -37,16 +41,16 @@ CREATE TABLE IF NOT EXISTS uporabnik (
 );
 
 CREATE TABLE IF NOT EXISTS sporocila (
- id INTEGER,
+ id INTEGER AUTOINCREMENT,
  cas TIMESTAMP DEFAULT now(),
- sporocilo TEXT, 
- posiljatelj TEXT NOT NULL REFERENCES uporabnik (uporabnisko_ime),
- prejemnik TEXT NOT NULL REFERENCES uporabnik (uporabnisko_ime),
+ sporocilo TEXT,
+ posiljatelj TEXT NOT NULL REFERENCES uporabnik (username),
+ prejemnik TEXT NOT NULL REFERENCES uporabnik (username),
  PRIMARY KEY (posiljatelj, prejemnik, id)
 );
 
-CREATE TABLE IF NOT EXISTS komentarji (
- id INTEGER PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS komentar (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
  cas TIMESTAMP DEFAULT now(),
  komentar TEXT,
  projekt INTEGER NOT NULL REFERENCES projekt (id),

@@ -1,0 +1,151 @@
+%rebase('base.html',  title='Moji projekti', username=username, projekti=projekti, kom=kom, statusi=statusi)
+
+<link rel="stylesheet" href="../static/css/sb-admin-2.css">
+
+      <div class="my-2"></div>
+       <a href="#novprojekt" class="btn btn-success btn-icon-split">
+       <span class="icon text-white-50">
+        <i class="fas fa-check">Dodaj projekt</i>
+       </span>
+       </a>
+<!-- Collapsable Card Example -->
+%for (id, ime, status, datum_zacetka, datum_konca, budget, porabljeno, narejeno, vsebina, emso) in projekti:
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">{{ ime }}</h6>
+                </div>
+
+                <div class="card-body" width="16000">
+                <style>
+                .gfg {
+                    -webkit-column-gap: 40px;
+                    -moz-column-gap: 40px;
+                    column-gap: 40px; /* Specifying Column Gap */
+                }
+
+                </style>
+                  <section class="row">
+                    <div class="left-column" type="width:50%" align="left" span="5">
+                      <strong>Opis projekta:</strong> {{ vsebina }}  <br>
+                      <strong>Datum začetka:</strong> {{ datum_zacetka }} <br>
+                      <strong>Datum konca:</strong> {{ datum_konca }} <br>
+                      <strong>Porabljeno:</strong> {{ porabljeno }} <br>
+                      <br>
+
+
+                      <!-- kartica za narejeno -->
+                            <div class="col-xl-3 col-md-6 mb-4">
+                              <div class="card border-left-info shadow h-100 py-2" style="width:250px">
+                                <div class="card-body" style="width:250px">
+                                  <div class="row no-gutters align-items-center" style="width:200px">
+                                    <div class="col mr-2" style="width:200px">
+                                      <div class="text-xs font-weight-bold text-info text-uppercase mb-1"style="width:200px">Narejeno</div>
+                                      <div class="row no-gutters align-items-center" style="width:200px">
+                                        <div class="col-auto">
+                                          <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800" style="width:50px">{{ narejeno }}%</div>
+                                        </div>
+                                        <div class="col">
+                                          <div class="progress progress-sm mr-2" style="width:100px">
+                                            <div class="progress-bar bg-info" role="progressbar" style="width: {{ narejeno }}%" aria-valuenow="{{ narejeno }}%" aria-valuemin="0" aria-valuemax="100"></div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+
+                        <!-- kartica za budget -->
+                             <div class="col-xl-3 col-md-6 mb-4" style="width:250px">
+                               <div class="card border-left-success shadow h-100 py-2" style="width:250px">
+                                 <div class="card-body" style="width:200px">
+                                   <div class="row no-gutters align-items-center" style="width:200px">
+                                     <div class="col mr-2" style="width:200px">
+                                       <div class="text-xs font-weight-bold text-success text-uppercase mb-1" style="width:100px">budget</div>
+                                       <div class="h5 mb-0 font-weight-bold text-gray-800" style="width:100px">€{{ budget }}</div>
+                                     </div>
+                                     <div class="col-auto">
+                                       <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                                     </div>
+                                   </div>
+                                 </div>
+                               </div>
+                             </div>
+                        </div>
+
+
+                    <div class="right-column" align="right" style="margin-left: 6em" width="50%">
+                    %if kom[id]:
+                        <table align="right">
+                          <col width="180">
+                          <col width="180">
+                          <col width="180">
+                          <tr>
+                            <th>Čas</th>
+                            <th>Komentar</th>
+                            <th>Avtor</th>
+                          </tr>
+                         %for (s, f, a)  in kom[id]:
+                          <tr>
+                            <td>{{ s }}</td>
+                            <td>{{ f }}</td>
+                            <td>{{ a }}</td>
+                          </tr>
+                        %end
+                        </table>
+                    %end
+                     <a name="projekt-{{ id }}" >
+                     <div class="panel-body">
+                       <form method="post" action=".">
+                           Id projekta:
+                          <input type="proo_id" class="form-control form-control-user" id="getIdOfProject"
+                            value = "{{ id }}" name = "proo_id" readonly>
+                          <textarea class="kommm" name="komm" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea>
+                          <button class="btn btn-primary btn-user btn-block" type="submit">
+                            Komentiraj
+                          </button>
+                       </form>
+                      </div>
+                      </a>
+                    </div>
+                  </section>
+                </div>
+
+              </div>
+%end
+
+<div class="left-column" width="50%">
+<strong>DODAJ PROJEKT</strong>
+<form class="user" role="form" method="post" action="." id="novprojekt">
+                        <span class="label-input100">Ime projekta</span><br>
+                        <textarea class="ime_proj" name="ime_proj" class="md-textarea form-control" rows="1" cols="65"></textarea><br>
+                        <span class="label-input100">Status:</span><br>
+
+                        <select name="status">
+                        %for status in statusi:
+                        <option value="{{status}}">{{status}}</option>
+                        %end
+                        </select> <br>
+                        <span class="label-input100">Datum začetka</span><br>
+                        <textarea class="datum_zac" name="datum_zac" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea><br>
+                        <span class="label-input100">Datum konca</span><br>
+                        <textarea class="dat_kon" name="dat_kon" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea><br>
+                        <span class="label-input100">Budget</span><br>
+                        <input type="number" step="0.01" id="budget" name="bud" cols="65"><br>
+                        <span class="label-input100">Porabljeno</span><br>
+                        <input type="number" step="0.01" id="porabljeno" name="por" cols="65"><br>
+                        <span class="label-input100">Narejeno</span><br>
+                        <input type="number" step="0.01" id="narejeno" name="nar" size="65"><br>
+                        <span class="label-input100">Opis</span><br>
+                        <textarea class="opis" name="opis" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea><br>
+
+
+
+                        <button class="btn btn-primary btn-user btn-block" type="submit" aria-setsize="20">
+                            Dodaj projekt
+                        </button>
+</form>
+</div>

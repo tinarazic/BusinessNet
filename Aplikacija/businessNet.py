@@ -49,12 +49,12 @@ def password_md5(s):
 # Funkcija, ki v cookie spravi sporocilo
 #ce jih ne bi bilo, streznik ne bi vedel, kaj je v prejsnje ze naredil
 def set_sporocilo(tip, vsebina):
-    response.set_cookie('message', (tip, vsebina), path='/', secret=secret)
+    bottle.response.set_cookie('message', (tip, vsebina), path='/', secret=secret)
 
 # Funkcija, ki iz cookija dobi sporočilo, če je
 def get_sporocilo():
-    sporocilo = request.get_cookie('message', default=None, secret=secret)
-    response.delete_cookie('message')
+    sporocilo = bottle.request.get_cookie('message', default=None, secret=secret)
+    bottle.response.delete_cookie('message')
     return sporocilo
 
 # To smo dobili na http://stackoverflow.com/questions/1551382/user-friendly-time-format-in-python
@@ -111,7 +111,7 @@ def get_user(auto_login = True):
     # Preverimo, ali ta uporabnik obstaja
     if username is not None:
         c = baza.cursor()
-        c.execute("SELECT username, ime FROM uporabnik WHERE username=%s",
+        c.execute("SELECT username, ime, emso FROM uporabnik WHERE username=%s",
                   [username])
         r = c.fetchone()
         c.close ()
@@ -141,9 +141,9 @@ def index():
     """Glavna stran."""
     # Iz cookieja dobimo uporabnika (ali ga preusmerimo na login, če
     # nima cookija)
-    (username, ime) = get_user()
+    (username, ime, emso) = get_user()
     # Morebitno sporočilo za uporabnika
-    #sporocilo = get_sporocilo()
+    sporocila = get_sporocilo()
     # Seznam projektov userja
     ts = projekti_glavna()
     budget = denar()
@@ -152,8 +152,8 @@ def index():
                            ime=ime,
                            username=username,
                            projekti_glavna=ts,
-                           denar=budget)
-                           #sporocilo=sporocilo
+                           denar=budget,
+                           sporocila=None)
 
 @bottle.get("/login/")
 def login_get():
@@ -249,7 +249,7 @@ def zaposleni(imes, priimek, oddelek):
 @bottle.get("/zaposleni/")
 def zaposleni_get():
     """Serviraj formo za zaposlene."""
-    (username, ime) = get_user()
+    (username, ime, emso) = get_user()
     return bottle.template("zaposleni.html",
                             username=username,
                             ime=ime,
@@ -260,7 +260,7 @@ def zaposleni_get():
 @bottle.post("/zaposleni/")
 def zaposleni_post():
     """Poišči sodelavca."""
-    (username, ime) = get_user()
+    (username, ime, emso) = get_user()
     imes = bottle.request.forms.imes
     priimek = bottle.request.forms.priimek
     oddelek = bottle.request.forms.oddelek
@@ -274,14 +274,14 @@ def zaposleni_post():
 @bottle.get("/sodelavci/")
 def sodelavci_get():
     "Vsi sodelavci"
-    (username, ime) = get_user()
+    (username, ime, emso) = get_user()
     return bottle.template("sodelavci.html",
                             username=username,
                             ime=ime)
 
 @bottle.get('/user/')
 def user_get():
-    (username, ime) = get_user()
+    (username, ime, emso) = get_user()
     ts = projekti_glavna()
     c = baza.cursor()
     c.execute(
@@ -297,19 +297,19 @@ def user_get():
 
 @bottle.get('/izziv/')
 def izziv_get():
-    (username, ime) = get_user()
+    (username, ime, emso) = get_user()
     return template('izziv.html', username=username, ime=ime)
 
 @bottle.get("/igra/")
 def igra_get():
-    (username, ime) = get_user()
+    (username, ime, emso) = get_user()
     return bottle.template("igra.html",
                             username=username,
                             ime=ime)
 
 def projekti_glavna():
     c = baza.cursor()
-    (username, ime)= get_user()
+    (username, ime, emso)= get_user()
     c.execute(
         '''WITH C1 AS (
            SELECT * FROM projekt JOIN delavci ON 
@@ -324,61 +324,170 @@ def projekti_glavna():
 
 def denar():
     c = baza.cursor()
-    (username, ime)= get_user()
+    (username, ime, emso)= get_user()
     c.execute(
         '''SELECT SUM(BUDGET) as budget_total, SUM(PORABLJENO) as porabljeno_total
             FROM projekt''')
     denar = tuple(c)
     return denar
 
-############################################################################################################################
-@bottle.route("/user/<username>/")
-def user_wall(username, sporocila=[]):
-    """Prikaži stran uporabnika"""
-    # Kdo je prijavljeni uporabnik? (Ni nujno isti kot username.)
-    (username_login, ime_login) = get_user()
-    # Ime uporabnika (hkrati preverimo, ali uporabnik sploh obstaja)
+
+def komentarji(projekt_id):
+    """Vrne komntarje pod danim projektom"""
     c = baza.cursor()
-    c.execute("SELECT ime FROM uporabnik WHERE username=%s", [username])
-    (ime,) = c.fetchone()
-    # # Koliko tracev je napisal ta uporabnik?
-    # c.execute("SELECT COUNT(*) FROM trac WHERE avtor=%s", [username])
-    # (t,) = c.fetchone()
-    # # Koliko komentarjev je napisal ta uporabnik?
-    # c.execute("SELECT COUNT(*) FROM komentar WHERE avtor=%s", [username])
-    # (k,) = c.fetchone()
-    # Prikažemo predlogo
-    return bottle.template("user.html",
-                           uporabnik_ime=ime,
-                           uporabnik=username,
+    c.execute(
+    """SELECT DISTINCT cas, komentar.vsebina, komentar.avtor
+        FROM komentar
+        WHERE komentar.projekt_id = %s
+        ORDER BY cas desc
+        LIMIT 7""", [projekt_id])
+    koment = tuple(c)
+    return koment
+
+
+def nov_projekt():
+    """Doda nov projekt."""
+    (username, ime, emso) = get_user()
+    id_proo = bottle.request.forms.proo_id
+    ime_proj = bottle.request.forms.ime_proj
+    datum_zac = bottle.request.forms.datum_zac
+    datum_kon = bottle.request.forms.dat_kon
+    status = bottle.request.forms.status
+    budget = bottle.request.forms.bud
+    porabljeno = bottle.request.forms.por
+    narejeno = bottle.request.forms.nar
+    opis = bottle.request.forms.opis
+    c = baza.cursor()
+    c.execute("""INSERT INTO projekt (ime, datum_zacetka, datum_konca, status, budget, porabljeno, narejeno, vsebina)
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+              [ime_proj, datum_zac, datum_kon, status, budget, porabljeno, narejeno, opis])
+    c.execute("SELECT max(id) FROM projekt")
+    max_id = tuple(c)
+    max_i = []
+    max_i += max_id
+    c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, %s)",
+              [max_id[0], emso])
+    c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, '19902208505124')",
+              [max_id[0]])
+    c.close()
+
+
+
+@bottle.get("/projekti/")
+def projekti_get():
+     """Vrne projekte uporabnika in komentarje pod projekti
+     """
+     (username, ime, emso) = get_user()
+     c = baza.cursor()
+     c.execute(
+     """SELECT DISTINCT projekt.id, projekt.ime, status, datum_zacetka, datum_konca, budget, porabljeno, narejeno, vsebina, delavci.emso
+        FROM (projekt INNER JOIN delavci ON projekt.id = delavci.projekt_id)
+        INNER JOIN uporabnik ON delavci.emso = uporabnik.emso
+        WHERE username = %s
+        ORDER BY datum_konca desc
+     """, [username])
+     projekti = tuple(c)
+     kom = {}
+     for (i, ime, stat, zac, kon, b, por, nar, v, em) in projekti:
+         if komentarji(i):
+             kom[i] = komentarji(i)
+         else:
+             kom[i] = ()
+     statusi = ['aktiven', 'končan']
+     return bottle.template("projekti.html", username=username, ime=ime, projekti=projekti, kom=kom, statusi=statusi)
+
+
+@bottle.post("/projekti/")
+def nov_komentar_projekt():
+    """Doda nov komentar ali delavca k projektu ali doda nov projekt."""
+    (username, ime, emso) = get_user()
+    # Vsebina komentarja
+    if bottle.request.forms.komm:
+        komentar_1 = bottle.request.forms.komm
+        pro_id = bottle.request.forms.proo_id
+        c = baza.cursor()
+        c.execute("INSERT INTO komentar (avtor, vsebina, projekt_id) VALUES (%s, %s, %s)",
+                  [username, komentar_1, pro_id])
+        c.close()
+    else:
+        nov_projekt()
+    return bottle.redirect("/projekti/")
+
+
+
+
+
+@bottle.get("/sporocila/")
+def sporocila_get():
+     """Vrne sporočila uporabnika in možnosti za prejemnike novega sporočila
+     """
+     (username, ime, emso) = get_user()
+     c = baza.cursor()
+     c.execute(
+     """SELECT DISTINCT cas, prejemnik, posiljatelj, sporocilo
+        FROM sporocila
+        WHERE (prejemnik = %s OR posiljatelj = %s)
+        ORDER BY cas desc
+        LIMIT 10""", [username, username])
+     sporocila = tuple(c)
+     c.close()
+     pogovori = []
+     for (cas, prejemnik, posiljatelj, sporocilo) in sporocila:
+         if (prejemnik != username) and (prejemnik not in pogovori):
+             pogovori.append(prejemnik)
+         elif (posiljatelj != username) and (posiljatelj not in pogovori):
+             pogovori.append(posiljatelj)
+     c = baza.cursor()
+     c.execute("""SELECT username FROM uporabnik""")
+     users = tuple(c)
+     useers = []
+     for user in users:
+         useers += user
+
+     return bottle.template("sporocila.html", username=username, sporocila=sporocila, pogovori=pogovori, useers=useers)
+
+
+@bottle.post("/sporocila/")
+def sporocila_post():
+    """Vnese novo sporočilo v bazo."""
+    (username, ime, emso) = get_user()
+    user = bottle.request.forms.user
+    spor = bottle.request.forms.spor
+    c = baza.cursor()
+    c.execute("INSERT INTO sporocila (sporocilo, posiljatelj, prejemnik) VALUES (%s, %s, %s)",
+              [spor, username, user])
+    c.close()
+    return bottle.redirect("/sporocila/")
+
+
+
+############################################################################################################################
+@bottle.get("/spremeni-geslo/")
+def user_wall():
+    """Prikaži stran uporabnika"""
+    (username_login, ime_login, emso_login) = get_user()
+    return bottle.template("spremeni-geslo.html",
+                        #   uporabnik_ime=ime,
+                        #   uporabnik=username,
                            username=username_login,
-                           ime=ime_login,
+                        #   ime=ime_login,
                         #    trac_count=t,
                         #    komentar_count=k,
-                           sporocila=sporocila)
+                           napaka=None)
 
     
-@bottle.post("/user/<username>/")
-def user_change(username):
+@bottle.post("/spremeni-geslo/")
+def user_change():
     """Obdelaj formo za spreminjanje podatkov o uporabniku."""
     # Kdo je prijavljen?
-    (username, ime) = get_user()
-    # Novo ime
-    ime_new = bottle.request.forms.ime
-    # Staro geslo (je obvezno)
+    (username, ime, emso) = get_user()
     password1 = password_md5(bottle.request.forms.password1)
     # Preverimo staro geslo
     c = baza.cursor()
-    c.execute ("SELECT 1 FROM uporabnik WHERE username=%s AND password=%s",
-               [username, password1])
-    # Pokazali bomo eno ali več sporočil, ki jih naberemo v seznam
-    sporocila = []
+    c.execute("SELECT 1 FROM uporabnik WHERE username=%s AND password=%s AND emso=%s",
+               [username, password1, emso])
     if c.fetchone():
         # Geslo je ok
-        # Ali je treba spremeniti ime?
-        if ime_new != ime:
-            c.execute("UPDATE uporabnik SET ime=%s WHERE username=%s", [ime_new, username])
-            sporocila.append(("alert-success", "Spreminili ste si ime."))
         # Ali je treba spremeniti geslo?
         password2 = bottle.request.forms.password2
         password3 = bottle.request.forms.password3
@@ -387,17 +496,19 @@ def user_change(username):
             if password2 == password3:
                 # Vstavimo v bazo novo geslo
                 password2 = password_md5(password2)
-                c.execute ("UPDATE uporabnik SET password=? WHERE username = ?", [password2, username])
-                sporocila.append(("alert-success", "Spremenili ste geslo."))
+                c.execute("UPDATE uporabnik SET password=%s WHERE (username = %s AND emso= %s)", [password2, username, emso])
+                return bottle.redirect("/")
+
             else:
-                sporocila.append(("alert-danger", "Gesli se ne ujemata"))
+                bottle.template("spremeni-geslo.html", username=username, napaka='Gesli se ne ujemata')
     else:
         # Geslo ni ok
-        sporocila.append(("alert-danger", "Napačno staro geslo"))
-    c.close ()
+        bottle.template("spremeni-geslo.html", username=username, napaka='Napačno staro geslo')
+
+    c.close()
     # Prikažemo stran z uporabnikom, z danimi sporočili. Kot vidimo,
     # lahko kar pokličemo funkcijo, ki servira tako stran
-    return user_wall(username, sporocila=sporocila)
+
  
 ######################################################################
 # Glavni program

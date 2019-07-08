@@ -1,0 +1,51 @@
+%rebase('base.html', title='Spremeni geslo', username=username, napaka=napaka)
+
+<link rel="stylesheet" href="../static/css/sb-admin-2.css">
+
+
+
+<div class="card o-hidden border-0 shadow-lg my-5">
+        <div class="card-body p-0">
+            %if napaka:
+             <a href="#" class="btn btn-warning btn-icon-split">
+               <span class="icon text-white-50">
+                    <i class="fas fa-exclamation-triangle"></i>
+               </span>
+               <span class="text">{{ napaka }}</span>
+             </a>
+            %end
+          <!-- Nested Row within Card Body -->
+          <div class="row">
+            <div class="col-lg-6">
+              <div class="p-3">
+                <form class="user" role="form" method="post" action="." >
+                    <span class="label-input100">Staro geslo</span>
+                    <input type="password1" class="form-control form-control-user"
+                    name = "password1">
+                    <span class="label-input100">Novo geslo</span>
+                    <input type="password2" class="form-control form-control-user"
+                    name = "password2">
+                    <span class="label-input100">Ponovi geslo</span>
+                    <input type="password3" class="form-control form-control-user"
+                    name = "password3">
+                    <p>
+
+                    </p>
+                    <button class="btn btn-primary btn-user btn-block" type="submit">
+                        Spremeni!
+                    </button>
+                </form>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="p-3 d">
+                    <img src="../static/img/boss-geslo.jpg"  width="400" height="300">
+              </div> 
+            </div>    
+          </div>            
+        </div>
+      </div>
+    </div>
+  </div>
+
+
