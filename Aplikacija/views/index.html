@@ -1,10 +1,12 @@
 %rebase('base.html',  username=username, title='Živjo!', sporocila=sporocila)
 
+
+
 <div class="row">
 <div class="col-lg-5">
 %for (id, projekt_ime, status, datum_začetka, datum_konca, budget, porabljeno, narejeno, vsebina, projekt_id, emso1, username, password, emso2, uporabnik_ime) in projekti_glavna:
 <!-- Earnings (Monthly) Card Example -->
-<div class="col-md-6 mb-1">
+<div class="col-md-10 mb-3">
   <div class="card border-left-info shadow h-100 py-2">
     <div class="card-body">
       <div class="row no-gutters align-items-center">
@@ -31,6 +33,7 @@
 %end
 </div>
 
+<script src="../js/demo/chart-pie-demo.js"></script>
 <div class="col-lg-6" >
  <!-- Donut Chart -->
      <div class="card shadow mb-4">
@@ -48,21 +51,6 @@
        </div>
      </div>
    </div>
- </div>
-</div>
-
-<div class="col-lg-6" >
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-      <h6 class="m-0 font-weight-bold text-primary"> Normirani stroški projektov</h6>
-    </div>
-    <div class="card-body">
-      <div class="chart-bar">
-        <canvas id="myBarChart"></canvas>
-      </div>
-      <hr>
-      Styling for the bar chart can be found in the <code>/js/demo/chart-bar-demo.js</code> file.
-    </div>
-</div>
+  </div>
 </div>
 </div>
