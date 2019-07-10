@@ -33,24 +33,45 @@
 %end
 </div>
 
-<script src="../js/demo/chart-pie-demo.js"></script>
-<div class="col-lg-6" >
- <!-- Donut Chart -->
-     <div class="card shadow mb-4">
-       <!-- Card Header - Dropdown -->
-       <div class="card-header py-3">
-         <h6 class="m-0 font-weight-bold text-primary">Denar namenjen projektom</h6>
-       </div>
-       <!-- Card Body -->
-       <div class="card-body">
-         <div class="chart-pie pt-4">
-           <canvas id="myPieChart"></canvas>
-         </div>
-         <hr>
-         Styling for the donut chart can be found in the <code>/js/demo/chart-pie-demo.js</code> file.
-       </div>
-     </div>
-   </div>
+
+<!-- Basic Card Example -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Porabljen denar namenjen projektom</h6>
+  </div>
+  <div class="card-body">
+      %for budget_total,  porabljeno_total in denar:
+
+      <div id="piechart"></div>
+      
+      <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+      
+      <script type="text/javascript">
+      // Load google charts
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+      
+      // Draw the chart and set the chart values
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+        ['Task', 'Znesek'],
+        ['PORABLJENO', {{porabljeno_total}}],
+        ['PREOSTANEK', {{budget_total}} - {{porabljeno_total}}],
+      ]);
+      
+        // Optional; add a title and set the width and height of the chart
+        var options = {'title':'', 'width':700, 'height':600};
+      
+        // Display the chart inside the <div> element with id="piechart"
+        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+        chart.draw(data, options);
+      }
+      </script>
+      %end
   </div>
 </div>
-</div>
+
+
+
+
+

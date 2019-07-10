@@ -448,8 +448,6 @@ def sporocila_post():
     return bottle.redirect("/sporocila/")
 
 
-
-############################################################################################################################
 @bottle.get("/spremeni-geslo/")
 def user_wall():
     """Prikaži stran uporabnika"""
