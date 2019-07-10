@@ -172,6 +172,11 @@ def register_post():
     password2 = bottle.request.forms.password2
     # Ali uporabnik že obstaja?
     c = baza.cursor()
+    c.execute("SELECT emso FROM zaposleni")
+    emsi = []
+    for e in tuple(c):
+        emsi += e
+
     c.execute("SELECT 1 FROM uporabnik WHERE username=%s", [username])
     if c.fetchone():
         # Uporabnik že obstaja
@@ -180,6 +185,7 @@ def register_post():
                                ime=ime,
                                emso=emso,
                                napaka='To uporabniško ime je že zavzeto.')
+
     elif not password1 == password2:
         # Geslo se ne ujemata
         return bottle.template("register.html",
@@ -187,12 +193,21 @@ def register_post():
                                ime=ime,
                                emso=emso,
                                napaka='Gesli se ne ujemata.')
+
+    elif emso not in emsi:
+        return bottle.template("register.html",
+                               username=username,
+                               ime=ime,
+                               emso=emso,
+                               napaka='Emšo ni med prijavljenimi.')
+
     else:
         # Vse je v redu, vstavi novega uporabnika v bazo
         password = password_md5(password1)
         c.execute("INSERT INTO uporabnik (username, ime, password, emso) VALUES (%s, %s, %s, %s)",
                   (username, ime, password, emso))
         # Daj uporabniku cookie
+        baza.commit()
         bottle.response.set_cookie('username', username, path='/', secret=secret)
         bottle.redirect("/")
 
@@ -331,16 +346,17 @@ def nov_projekt():
     opis = bottle.request.forms.opis
     c = baza.cursor()
     c.execute("""INSERT INTO projekt (ime, datum_zacetka, datum_konca, status, budget, porabljeno, narejeno, vsebina)
-                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
               [ime_proj, datum_zac, datum_kon, status, budget, porabljeno, narejeno, opis])
-    c.execute("SELECT max(id) FROM projekt")
-    max_id = tuple(c)
-    max_i = []
-    max_i += max_id
+    baza.commit()
+    max_id, = c.fetchone()
     c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, %s)",
-              [max_id[0], emso])
-    c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, '19902208505124')",
-              [max_id[0]])
+              [max_id, emso])
+    baza.commit()
+    if username != 'direktor':
+        c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, '19902208505124')",
+                  [max_id])
+        baza.commit()
     c.close()
 
 
@@ -352,12 +368,9 @@ def projekti_get():
      c = baza.cursor()
      c.execute("""SELECT username FROM uporabnik""")
      users = tuple(c)
-     useers = []
+     useerss = []
      for user in users:
-        useers += user
-
-     c.close()
-     c = baza.cursor()
+         useerss += user
      c.execute(
      """SELECT DISTINCT projekt.id, projekt.ime, status, datum_zacetka, datum_konca, budget, porabljeno, narejeno, vsebina, delavci.emso
         FROM (projekt INNER JOIN delavci ON projekt.id = delavci.projekt_id)
@@ -367,7 +380,20 @@ def projekti_get():
      """, [username])
      projekti = tuple(c)
      kom = {}
+     useers = {}
      for (i, ime, stat, zac, kon, b, por, nar, v, em) in projekti:
+         c.execute("""SELECT username FROM uporabnik JOIN delavci ON uporabnik.emso=delavci.emso
+                      WHERE projekt_id=%s""", [i])
+         na_projektu = tuple(c)
+         ze_na_projektu = []
+         #usernami tistih, ki so že na projeku id=i
+         for z in na_projektu:
+             ze_na_projektu += z
+         mozni = []
+         for user in useerss:
+            if user not in ze_na_projektu:
+                mozni.append(user)
+         useers[i] = mozni
          if komentarji(i):
              kom[i] = komentarji(i)
          else:
@@ -387,19 +413,30 @@ def nov_komentar_projekt():
         c = baza.cursor()
         c.execute("INSERT INTO komentar (avtor, vsebina, projekt_id) VALUES (%s, %s, %s)",
                   [username, komentar_1, pro_id])
+        baza.commit()
         c.close()
     elif bottle.request.forms.user:
         delavec = bottle.request.forms.user
         pro_id = bottle.request.forms.proo_id
         c = baza.cursor()
         c.execute("SELECT emso FROM uporabnik WHERE username=%s",
-                                 [delavec])
+                  [delavec])
         dela = tuple(c)
         delavec_emso = []
         for d in dela:
             delavec_emso += d
         c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, %s)",
-                    [pro_id, delavec_emso[0]])
+                  [pro_id, delavec_emso[0]])
+        baza.commit()
+    elif bottle.request.forms.naar:
+        naar = bottle.request.forms.naar
+        poor = bottle.request.forms.poor
+        pro_id = bottle.request.forms.proo_id
+        c = baza.cursor()
+        c.execute("UPDATE projekt SET porabljeno=%s, narejeno=%s WHERE id=%s",
+                  [poor, naar, pro_id])
+        baza.commit()
+
     else:
         nov_projekt()
     return bottle.redirect("/projekti/")
@@ -444,6 +481,7 @@ def sporocila_post():
     c = baza.cursor()
     c.execute("INSERT INTO sporocila (sporocilo, posiljatelj, prejemnik) VALUES (%s, %s, %s)",
               [spor, username, user])
+    baza.commit()
     c.close()
     return bottle.redirect("/sporocila/")
 
@@ -478,6 +516,7 @@ def user_change():
                 # Vstavimo v bazo novo geslo
                 password2 = password_md5(password2)
                 c.execute("UPDATE uporabnik SET password=%s WHERE (username = %s AND emso= %s)", [password2, username, emso])
+                baza.commit()
                 return bottle.redirect("/")
 
             else:
@@ -496,7 +535,7 @@ def user_change():
 # priklopimo se na bazo
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE) # se znebimo problemov s šumniki
 baza = psycopg2.connect(database=auth.db, host=auth.host, user=auth.user, password=auth.password)
-baza.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT) # onemogočimo transakcije
+#baza.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT) # onemogočimo transakcije
 cur = baza.cursor(cursor_factory=psycopg2.extras.DictCursor) 
 # poženemo strežnik na portu 8080, glej http://localhost:8080/
 run(host='localhost', port=8080)

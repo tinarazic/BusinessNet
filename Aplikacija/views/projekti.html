@@ -37,7 +37,7 @@
                 </style>
                   <section class="row">
                     <div class="left-column" type="width:50%" align="left" span="5">
-                      <strong>Opis projekta:</strong> {{ vsebina }}  <br>
+                      <strong>Opis projekta:</strong> <br>{{ vsebina }}  <br>
                       <strong>Datum začetka:</strong> {{ datum_zacetka }} <br>
                       <strong>Datum konca:</strong> {{ datum_konca }} <br>
                       <strong>Porabljeno:</strong> {{ porabljeno }} <br>
@@ -86,11 +86,11 @@
                                </div>
                              </div>
                         <form class="user" role="form" method="post" action="." >
-                            <span class="label-input100">Dodaj sodelavca na projekt:</span><br>
+                            <span class="label-input100">DODAJ SODELAVCA NA PROJEKT:</span><br>
                             <input type="hidden" class="form-control" id="getIdOfProject"
                              value={{ id }} name = "proo_id" >
                             <select name="user">
-                            %for user in useers:
+                            %for user in useers[id]:
                             <option value="{{user}}">{{user}}</option>
                             %end
                             </select> <br>
@@ -98,7 +98,19 @@
                                 Dodaj!
                             </button>
                         </form>
-
+                        <br>
+                        <form class="user" role="form" method="post" action="." >
+                            <span class="label-input100">POSODOBI PROJEKT:</span><br>
+                            <input type="hidden" class="form-control" id="getIdOfProject"
+                             value={{ id }} name = "proo_id" >
+                            <span class="label-input100">Porabljeno</span><br>
+                            <input type="number" value={{ porabljeno }} step="0.01" id="poor" name="poor" cols="65"><br>
+                            <span class="label-input100">Narejeno</span><br>
+                            <input type="number" value={{ narejeno }} id="naar" name="naar" cols="65"><br>
+                            <button class="btn btn-block btn-sm" type="submit" style="width:90px" >
+                                Posodobi!
+                            </button>
+                        </form>
                         </div>
 
 
@@ -159,15 +171,15 @@
                         %end
                         </select> <br>
                         <span class="label-input100">Datum začetka</span><br>
-                        <textarea class="datum_zac" name="datum_zac" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea><br>
+                        <input type="date" class="datum_zac" name="datum_zac"></input><br>
                         <span class="label-input100">Datum konca</span><br>
-                        <textarea class="dat_kon" name="dat_kon" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea><br>
+                        <input type="date" class="dat_kon" name="dat_kon"></input><br>
                         <span class="label-input100">Budget</span><br>
                         <input type="number" step="0.01" id="budget" name="bud" cols="65"><br>
                         <span class="label-input100">Porabljeno</span><br>
                         <input type="number" step="0.01" id="porabljeno" name="por" cols="65"><br>
                         <span class="label-input100">Narejeno</span><br>
-                        <input type="number" step="0.01" id="narejeno" name="nar" size="65"><br>
+                        <input type="number" id="narejeno" name="nar" size="65"><br>
                         <span class="label-input100">Opis</span><br>
                         <textarea class="opis" name="opis" class="md-textarea form-control rounded-0" rows="1" cols="65"></textarea><br>
                         <button class="btn btn-primary" type="submit width:50px" aria-setsize="20">
