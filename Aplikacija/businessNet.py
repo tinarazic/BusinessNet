@@ -224,6 +224,7 @@ def zaposleni(imes, priimek, oddelek):
             WHERE C1.ime LIKE %s
             and priimek LIKE %s
             and oddelek LIKE %s ''', (imes, priimek, oddelek))
+    c.close()
     sodelavci = tuple(c)
     return sodelavci
 
@@ -277,6 +278,7 @@ def user_get():
             C1 LEFT JOIN uporabnik ON C1.emso = uporabnik.emso
             WHERE username=%s ''', [username])    
     podatki = tuple(c)
+    c.close()
     return bottle.template('user.html', username=username, ime=ime, podatki=podatki, projekti_glavna=ts)
 
 
@@ -306,6 +308,7 @@ def projekti_glavna():
            WHERE username=%s
            ORDER BY narejeno ASC ''', [username])
     projekti_glavna = tuple(c)
+    c.close()
     return projekti_glavna
 
 
@@ -316,6 +319,7 @@ def denar():
         '''SELECT SUM(BUDGET) as budget_total, SUM(PORABLJENO) as porabljeno_total
             FROM projekt''')
     denar = tuple(c)
+    c.close()
     return denar
 
 
@@ -329,6 +333,7 @@ def komentarji(projekt_id):
         ORDER BY cas desc
         LIMIT 7""", [projekt_id])
     koment = tuple(c)
+    c.close()
     return koment
 
 
@@ -348,15 +353,13 @@ def nov_projekt():
     c.execute("""INSERT INTO projekt (ime, datum_zacetka, datum_konca, status, budget, porabljeno, narejeno, vsebina)
                  VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id""",
               [ime_proj, datum_zac, datum_kon, status, budget, porabljeno, narejeno, opis])
-    baza.commit()
     max_id, = c.fetchone()
     c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, %s)",
               [max_id, emso])
-    baza.commit()
     if username != 'direktor':
         c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, '19902208505124')",
                   [max_id])
-        baza.commit()
+    baza.commit()
     c.close()
 
 
@@ -399,6 +402,7 @@ def projekti_get():
          else:
              kom[i] = ()
      statusi = ['aktiven', 'končan']
+     c.close()
      return bottle.template("projekti.html", username=username, ime=ime, projekti=projekti, kom=kom, statusi=statusi, useers=useers)
 
 
@@ -413,8 +417,6 @@ def nov_komentar_projekt():
         c = baza.cursor()
         c.execute("INSERT INTO komentar (avtor, vsebina, projekt_id) VALUES (%s, %s, %s)",
                   [username, komentar_1, pro_id])
-        baza.commit()
-        c.close()
     elif bottle.request.forms.user:
         delavec = bottle.request.forms.user
         pro_id = bottle.request.forms.proo_id
@@ -427,7 +429,6 @@ def nov_komentar_projekt():
             delavec_emso += d
         c.execute("INSERT INTO delavci (projekt_id, emso) VALUES (%s, %s)",
                   [pro_id, delavec_emso[0]])
-        baza.commit()
     elif bottle.request.forms.naar:
         naar = bottle.request.forms.naar
         poor = bottle.request.forms.poor
@@ -435,10 +436,10 @@ def nov_komentar_projekt():
         c = baza.cursor()
         c.execute("UPDATE projekt SET porabljeno=%s, narejeno=%s WHERE id=%s",
                   [poor, naar, pro_id])
-        baza.commit()
-
     else:
         nov_projekt()
+    baza.commit()
+    c.close()
     return bottle.redirect("/projekti/")
 
 
@@ -468,7 +469,7 @@ def sporocila_get():
      useers = []
      for user in users:
          useers += user
-
+     c.close()
      return bottle.template("sporocila.html", username=username, sporocila=sporocila, pogovori=pogovori, useers=useers)
 
 
