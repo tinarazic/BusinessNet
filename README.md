@@ -8,6 +8,7 @@ Vpis v aplikacijo - dostop do vsega: <br/>
   password = direktor <br/>
 
 Izmisljen emso za profesorja: 19860721500502
+
 Izmisljen emso za asistenta: 19880921500501
 
 
