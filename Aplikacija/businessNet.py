@@ -3,12 +3,13 @@
 import sqlite3
 import bottle
 from bottle import *
-import hashlib # računanje kriptografski hash za gesla
+import hashlib  # računanje kriptografski hash za gesla
 from datetime import datetime
-import auth_public as auth 
+import auth_public as auth
 import psycopg2, psycopg2.extensions, psycopg2.extras
 
 bottle.TEMPLATE_PATH.insert(0,"./views")
+
 
 ######################################################################
 # Konfiguracija
@@ -17,8 +18,6 @@ bottle.TEMPLATE_PATH.insert(0,"./views")
 # lepa sporočila o napakah.
 debug(True)
 
-# Datoteka, v kateri je baza
-baza_datoteka = "bussinesNet.sqlite"
 
 # Mapa s statičnimi datotekami
 static_dir = "./static"
@@ -39,12 +38,12 @@ def password_md5(s):
     h.update(s.encode('utf-8'))
     return h.hexdigest()
 
-def password_hash(s):
-    """Vrni SHA-512 hash danega UTF-8 niza. Gesla vedno spravimo v bazo
-       kodirana s to funkcijo."""
-    h = hashlib.sha512()
-    h.update(s.encode('utf-8'))
-    return h.hexdigest()
+# def password_hash(s):
+#     """Vrni SHA-512 hash danega UTF-8 niza. Gesla vedno spravimo v bazo
+#        kodirana s to funkcijo."""
+#     h = hashlib.sha512()
+#     h.update(s.encode('utf-8'))
+#     return h.hexdigest()
 
 # Funkcija, ki v cookie spravi sporocilo
 #ce jih ne bi bilo, streznik ne bi vedel, kaj je v prejsnje ze naredil
@@ -73,7 +72,7 @@ def get_user(auto_login = True):
         c.execute("SELECT username, ime, emso FROM uporabnik WHERE username=%s",
                   [username])
         r = c.fetchone()
-        c.close ()
+        c.close()
         if r is not None:
             # uporabnik obstaja, vrnemo njegove podatke
             return r
@@ -82,8 +81,6 @@ def get_user(auto_login = True):
         bottle.redirect('/login/')
     else:
         return None
-
-
 
 
 ######################################################################
@@ -101,8 +98,6 @@ def index():
     # Iz cookieja dobimo uporabnika (ali ga preusmerimo na login, če
     # nima cookija)
     (username, ime, emso) = get_user()
-    # Morebitno sporočilo za uporabnika
-    sporocila = get_sporocilo()
     # Seznam projektov userja
     ts = projekti_glavna()
     budget = denar()
@@ -111,9 +106,7 @@ def index():
                            ime=ime,
                            username=username,
                            projekti_glavna=ts,
-                           denar=budget,
-                           sporocila=None)
-
+                           denar=budget)
 
 @bottle.get("/login/")
 def login_get():
@@ -153,7 +146,7 @@ def login_post():
 
 
 @bottle.get("/register/")
-def login_get():
+def register_get():
     """Prikaži formo za registracijo."""
     return bottle.template("register.html", 
                            username=None,
@@ -224,8 +217,8 @@ def zaposleni(imes, priimek, oddelek):
             WHERE C1.ime LIKE %s
             and priimek LIKE %s
             and oddelek LIKE %s ''', (imes, priimek, oddelek))
-    c.close()
     sodelavci = tuple(c)
+    c.close()
     return sodelavci
 
 
@@ -314,7 +307,6 @@ def projekti_glavna():
 
 def denar():
     c = baza.cursor()
-    (username, ime, emso)= get_user()
     c.execute(
         '''SELECT SUM(BUDGET) as budget_total, SUM(PORABLJENO) as porabljeno_total
             FROM projekt''')
@@ -411,16 +403,15 @@ def nov_komentar_projekt():
     """Doda nov komentar ali delavca k projektu ali doda nov projekt."""
     (username, ime, emso) = get_user()
     # Vsebina komentarja
+    c = baza.cursor()
     if bottle.request.forms.komm:
         komentar_1 = bottle.request.forms.komm
         pro_id = bottle.request.forms.proo_id
-        c = baza.cursor()
         c.execute("INSERT INTO komentar (avtor, vsebina, projekt_id) VALUES (%s, %s, %s)",
                   [username, komentar_1, pro_id])
     elif bottle.request.forms.user:
         delavec = bottle.request.forms.user
         pro_id = bottle.request.forms.proo_id
-        c = baza.cursor()
         c.execute("SELECT emso FROM uporabnik WHERE username=%s",
                   [delavec])
         dela = tuple(c)
@@ -433,7 +424,6 @@ def nov_komentar_projekt():
         naar = bottle.request.forms.naar
         poor = bottle.request.forms.poor
         pro_id = bottle.request.forms.proo_id
-        c = baza.cursor()
         c.execute("UPDATE projekt SET porabljeno=%s, narejeno=%s WHERE id=%s",
                   [poor, naar, pro_id])
     else:
